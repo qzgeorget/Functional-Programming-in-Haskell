@@ -1,0 +1,169 @@
+---- Part 1 a ----
+-- Functional programming allows the reuse of functions in other projects after they are initially created.
+-- Therefore, this reduces repeating code, when a section of code has to be repeated multiple times.
+-- On the other hand, writing code in functions also modularises the code, making it appear more organised and easy to read.
+
+---- Part 1 b ----
+{- A mathematical function should have a very clear input, selected from its domain, and an output, selected from its co-domain or range. Both the input and output must be defined properly and clearly before the function can be used. On top of that the input often goes through a process before it exits the function as the output. -}
+{-Haskell functions are similar, in the most obvious way, in the fact that it requires the types of its inputs and outputs to be declared in the first line. The rest of the function would specify under what conditions, in accordance to the input, would produce which outputs, as well as what process must be carried out to transform the input into the output. -}
+
+---- Part 1 c ----
+-- A higher-order function is a function that takes a function as an argument or returns a function as result. 
+-- Higher-order function "map" takes a separate function and a list as an argument, and then applies the function to every element of the list. 
+
+
+
+
+
+---- Part 2 a ----
+-- Declaring data structure Horse as a tuple containing a string and an integer.
+type Horse = (String, Int)
+
+---- Part 2 b ----
+-- The built-in function zip combines a list of names and a list of heights to their corresponding counterparts.
+create_horse_list :: [String] -> [Int] -> [Horse]
+create_horse_list names heights = zip names heights
+
+---- Part 2 c ----
+-- By recognising each tuple contain the name and then the height using pattern matching, the height data value can easily be taken out separately to order using the quick sort algorithm.
+sort_horse_list :: [Horse] -> [Horse]
+sort_horse_list [] = []
+sort_horse_list ((pivot_name, pivot_height):xs) = sort_horse_list [(name, height) | (name, height) <- xs, height <= pivot_height] ++ [(pivot_name, pivot_height)] ++ [(name, height) | (name, height) <- xs, height > pivot_height]
+
+---- Part 2 d ----
+-- Recurring the number of times of the numbers of horses to be removed and removing the shortest horse at every recursive cycle.
+remove_smallest_horse :: Int -> [Horse] -> [Horse]
+remove_smallest_horse num [] = []
+remove_smallest_horse num horseList
+	|num == 0 = horseList
+	|sort_horse_list horseList == horseList = remove_smallest_horse (num - 1) (tail horseList)
+	|otherwise = remove_smallest_horse num (sort_horse_list horseList)
+
+---- Part 2 e ----
+-- Using pattern matching and list comprehension to select all horses which are above 152cm.
+remove_tall_horses :: [Horse] -> [Horse]
+remove_tall_horses [] = []
+remove_tall_horses horseList = [(name, height) | (name, height) <- horseList, height <= 152]
+
+
+
+
+
+---- Part 3 a ----
+-- Function steps passes information into the ascending function and the descending function.
+steps :: Int -> Int -> Int -> [Char]
+steps x y z = stepsup x y z ++ "\n" ++ stepsdown x y z
+
+-- Assembles a string of the pattern in an ascending fashion, where each recursion takes one away from the column multiplier until it reaches 1.
+stepsup :: Int -> Int -> Int -> [Char]
+stepsup 1 columns 1 = replicate columns '*'
+stepsup rows columns 1 = (stepsup (rows - 1) columns 1) ++ "\n" ++ (stepsup 1 columns 1)
+stepsup rows columns columnmult = stepsup rows columns (columnmult - 1) ++ "\n" ++ stepsup rows (columns * columnmult) 1 
+
+-- Same as the above function but in a descending fashion.
+stepsdown :: Int -> Int -> Int -> [Char]
+stepsdown 1 columns 1 = replicate columns '*'
+stepsdown rows columns 1 = (stepsdown (rows - 1) columns 1) ++ "\n" ++ (stepsdown 1 columns 1)
+stepsdown rows columns columnmult = stepsdown rows (columns * columnmult) 1 ++ "\n" ++ stepsdown rows columns (columnmult - 1)
+
+
+---- Part 3 b ----
+-- Passes information to the function which draws the actual patterns and recurrs until the descending number limit is reached.
+flagpattern :: Int -> Int -> [Char]
+flagpattern start num
+	|num == 0 = []
+	|otherwise = onedrawer start ++ "\n" ++ flagpattern (start - 1) (num - 1)
+
+-- Responsible for drawing each individual map, which passes the necessary information to the function which draws the rest of the map except the first row.
+onedrawer :: Int -> [Char]
+onedrawer sides = (replicate sides '*') ++ "\n" ++ insides sides sides
+
+-- Recursive function which calculates which space along the inside rows should be replaced by an asterisk.
+insides :: Int -> Int -> [Char]
+insides sides 2 = replicate sides '*'
+insides sides row = replace (sides - row + 1) (replace (row - 2) (['*'] ++ (replicate (sides - 2) ' ')) ++ ['*']) ++ "\n" ++ insides sides (row - 1)
+
+-- Actually replaces the spaces with the asterisks.
+replace :: Int -> [Char] -> [Char]
+replace index (x:xs)
+	|xs == "*" = "**"
+	|index == 0 = '*':xs
+	|otherwise = x:replace (index - 1) xs
+
+
+
+
+
+---- Part 4 ----
+-- Passes information into the calculation modules as well as combining the first clause and the second clause.
+compatibility :: [Char] -> [Char] -> [Char]
+compatibility name1 name2 = firstclause name1 name2 ++ secondclause name1 name2
+
+-- Removes the space in between the first name and the surname.
+removespace :: [Char] -> [Char]
+removespace name = [x | x <- name, x /= ' ']
+
+-- Calculates the attitude person 1 has towards person 2 after the cancelling out of repeating letters.
+firstclause :: [Char] -> [Char] -> [Char]
+firstclause name1 name2 
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 0 = name1 ++ " is indifferent to " ++ name2 ++ " and "
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 1 = name1 ++ " admires " ++ name2 ++ " and "
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 2 = name1 ++ " likes " ++ name2 ++ " and "
+	|otherwise = name1 ++ " hates " ++ name2 ++ " and "
+
+-- Calculates the attitude person 2 has towards person 1 after the cancelling out of repeating letters.
+secondclause :: [Char] -> [Char] -> [Char]
+secondclause name2 name1 
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 0 = name1 ++ " is indifferent to " ++ name2
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 1 = name1 ++ " admires " ++ name2
+	|mod (length(reducer (removespace name1) (removespace name2) (removespace name2) [])) 4 == 2 = name1 ++ " likes " ++ name2
+	|otherwise = name1 ++ " hates " ++ name2
+
+-- Removes the repeating letters between the two names, returns the name of person 1 after the cancelling.
+reducer :: [Char] -> [Char] -> [Char] -> [Char] -> [Char]
+reducer [] (y:ys) name2 final = final
+reducer (x:xs) (y:ys) name2 final
+	|x == y = reducer xs (removeelement name2 y) (removeelement name2 y) final
+	|(length (y:ys) == 1) && (x == y) = reducer xs (removeelement name2 y) (removeelement name2 y) final
+	|(length (y:ys) == 1) && (x /= y) = reducer xs name2 name2 (final ++ [x])
+	|(length (x:xs) == 1) && (length (y:ys) == 1) = final ++ [x]
+	|otherwise = reducer (x:xs) ys name2 final
+
+-- Support function to remove the letter from the name.
+removeelement :: [Char] -> Char -> [Char]
+removeelement (x:xs) letter
+	|x == letter = xs
+	|otherwise = [x] ++ (removeelement xs letter)
+
+
+
+
+
+---- Part 5 a ----
+-- Passes the necessary information in a way which allows recursion to happen.
+split :: (Eq a) => [a] -> a -> [[a]]
+split [] separator = []
+split x separator = removeempty (splithelper x x 0 separator)
+
+-- Support recursion function to detect the separators and then group the elements into their own little groups starting a new list everytime a separator is encountered.
+splithelper :: (Eq a) => [a] -> [a] -> Int -> a -> [[a]]
+splithelper [] original index separator = []
+splithelper (x:xs) original index separator
+	|x == separator = [take index original] ++ splithelper xs xs 0 separator
+	|length (x:xs) == 1 = [take (index + 1) original]
+	|otherwise = splithelper xs original (index + 1) separator
+
+-- Remove any empty lists which may occur when there are two separators consecutively.
+removeempty :: (Eq a) => [[a]] -> [[a]]
+removeempty list = [x | x <- list, x /= []]
+
+---- Part 5 b ----
+-- Length of the word to be replaced should be checked starting every letter, not just the letter after the last letter checked in the previous recursion.
+swapwords :: String -> String -> String -> String
+swapwords w1 w2 s
+	|top == [] = []
+	|top == w1 = w2 ++ swapwords w1 w2 rest
+	|otherwise = [head s] ++ swapwords w1 w2 (tail s)
+		where
+		top = take (length w1) s
+		rest = drop (length w1) s
